@@ -9,6 +9,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Great+Vibes&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&display=swap" rel="stylesheet" />
 
   <style>
@@ -2235,13 +2236,59 @@ var WD_DEFAULT = {
   theme: 'pink'
 };
 
+function packWeddingData(data) {
+  try {
+    var minimal = {};
+    for (var k in data) {
+      if (typeof data[k] === 'string' && data[k].indexOf('data:image') === 0) {
+        continue;
+      }
+      if (data[k] !== WD_DEFAULT[k]) {
+        minimal[k] = data[k];
+      }
+    }
+    var json = JSON.stringify(minimal);
+    if (window.LZString) {
+      return LZString.compressToEncodedURIComponent(json);
+    }
+    return encodeURIComponent(btoa(unescape(encodeURIComponent(json))));
+  } catch(e) {
+    return '';
+  }
+}
+
+function unpackWeddingData(encodedStr) {
+  try {
+    if (!encodedStr) return null;
+    var json = '';
+    if (window.LZString) {
+      json = LZString.decompressFromEncodedURIComponent(encodedStr);
+    }
+    if (!json) {
+      json = decodeURIComponent(escape(atob(decodeURIComponent(encodedStr))));
+    }
+    return JSON.parse(json);
+  } catch(e) {
+    return null;
+  }
+}
+
 function loadData() {
+  var params = new URLSearchParams(window.location.search);
+  var encodedData = params.get('d') || params.get('data');
+  var urlData = unpackWeddingData(encodedData);
+
+  var localData = null;
   try {
     var s = localStorage.getItem(WD_KEY);
-    return s ? Object.assign({}, WD_DEFAULT, JSON.parse(s)) : Object.assign({}, WD_DEFAULT);
-  } catch(e) {
-    return Object.assign({}, WD_DEFAULT);
+    if (s) localData = JSON.parse(s);
+  } catch(e) {}
+
+  var merged = Object.assign({}, WD_DEFAULT, localData || {}, urlData || {});
+  if (urlData) {
+    saveData(merged);
   }
+  return merged;
 }
 
 function saveData(d) {
@@ -2346,6 +2393,7 @@ function updateLiveField(key, val) {
 }
 
 function populateLiveUI(d) {
+  document.title = (d.groomName || 'Veer') + ' & ' + (d.brideName || 'Zara') + ' | Wedding Invitation — ' + (d.weddingDate || 'September 30, 2026');
   setTxt('env-couple-names', d.groomName + ' & ' + d.brideName);
   setTxt('env-wedding-date', d.weddingDate);
   setTxt('env-city', d.venueCity || 'Mumbai');
@@ -2494,9 +2542,17 @@ function generateGuestLink() {
     return;
   }
   
+  var data = loadData();
+  var payload = packWeddingData(data);
+  
   lastGeneratedGuest = name;
   var base = window.location.protocol + '//' + window.location.host + window.location.pathname;
-  lastGeneratedLink = base + '?g=' + encodeURIComponent(name);
+  
+  var queryParts = [];
+  if (payload) queryParts.push('d=' + payload);
+  queryParts.push('g=' + encodeURIComponent(name));
+  
+  lastGeneratedLink = base + '?' + queryParts.join('&');
 
   var resCard = document.getElementById('guest-result-card');
   var resName = document.getElementById('res-guest-name');
