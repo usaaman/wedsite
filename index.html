@@ -2194,356 +2194,70 @@
 </main>
 
 <script>
-/* ====== ENVELOPE ====== */
-var envelopeOpened = false;
-function openEnvelope() {
-  if (envelopeOpened) return;
-  envelopeOpened = true;
-  document.getElementById('envelope-scene').classList.add('open');
-  setTimeout(function() {
-    document.getElementById('envelope-overlay').classList.add('hidden');
-    var main = document.getElementById('main-content');
-    main.removeAttribute('aria-hidden');
-    main.classList.add('revealed');
-    setTimeout(function() {
-      document.querySelectorAll('#hero .reveal').forEach(function(el, i) {
-        setTimeout(function() { el.classList.add('visible'); }, i * 120);
-      });
-    }, 400);
-  }, 1200);
+/* ====== GLOBAL WEDDING DATA & KEYS ====== */
+var WD_KEY = 'wedding_data_v1';
+var WD_GUESTS_KEY = 'wedding_guests_v1';
+var WD_LOCK_KEY = 'wedding_lock_status_v1';
+
+var WD_DEFAULT = {
+  brideName: 'Zara',
+  groomName: 'Veer',
+  brideParents: 'D/o Mr. & Mrs. Farooq Khan',
+  groomParents: 'S/o Mr. & Mrs. Rajesh Malhotra',
+  brideDegree: 'BA (Delhi University) · MA (JNU)',
+  groomDegree: 'B.Tech (IIT Delhi) · MBA (Harvard)',
+  invitationHeading: 'We are honoured to welcome you',
+  invitationSubtext: 'to the Wedding Ceremony of',
+  weddingDate: 'September 30, 2026',
+  weddingDay: 'Wednesday',
+  weddingDateISO: '2026-09-30T11:30:00+05:30',
+  countdownTitle: 'Counting Down to Forever',
+  countdownSubtitle: 'September 30, 2026 · Mumbai',
+  venueName: 'The Taj Mahal Palace',
+  venueAddress: 'Apollo Bunder, Colaba, Mumbai, Maharashtra 400 001',
+  venueCity: 'Mumbai',
+  mapsUrl: 'https://maps.google.com/?q=Taj+Mahal+Palace+Mumbai',
+  whatsappNumber: '+919876543210',
+  heroImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85&auto=format&fit=crop',
+  countdownBgImage: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1600&q=80&auto=format&fit=crop',
+  venueImage: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80&auto=format&fit=crop',
+  event1Time: 'September 30 · 10:00 AM', event1Title: '🌺 Guest Arrival',
+  event1Desc: 'Warm welcome with floral garlands, refreshments, and traditional music. The red carpet is laid for our honoured guests at the grand foyer.',
+  event2Time: 'September 30 · 11:30 AM', event2Title: '💍 Wedding Ceremony',
+  event2Desc: 'The sacred union. Exchange of vows, seven sacred circles, and the tying of the sacred knot in the presence of family and loved ones.',
+  event3Time: 'September 30 · 02:00 PM', event3Title: '🥂 Grand Reception',
+  event3Desc: 'Celebrate the newlyweds with a sumptuous feast, live music, dancing, and heartfelt toasts. An evening of joy, laughter, and unforgettable memories.',
+  mehendiDate: 'September 27, 2026', mehendiTime: '5:00 PM — 9:00 PM', mehendiLocation: 'Malhotra Residence, Juhu',
+  haldiDate: 'September 29, 2026', haldiTime: '9:00 AM — 12:00 PM', haldiLocation: 'Khan Residence, Bandra',
+  transport1: 'Bandra Station — 9:00 AM', transport2: 'Dadar Station — 9:15 AM', transport3: 'CSMT Station — 9:45 AM',
+  accommodationName: 'Taj Mahal Palace', accommodationWing: 'Heritage Wing', accommodationCode: 'VEERZARA2026',
+  footerTagline: 'Made with ❤️ for our most cherished guests',
+  theme: 'pink'
+};
+
+function loadData() {
+  try {
+    var s = localStorage.getItem(WD_KEY);
+    return s ? Object.assign({}, WD_DEFAULT, JSON.parse(s)) : Object.assign({}, WD_DEFAULT);
+  } catch(e) {
+    return Object.assign({}, WD_DEFAULT);
+  }
 }
 
-/* ====== PARTICLES ====== */
-(function() {
-  var canvas = document.getElementById('particles-canvas');
-  var ctx = canvas.getContext('2d');
-  var W, H, particles = [];
-  var COLORS = ['#f9a8d4','#fcd34d','#fbcfe8','#c9a84c','#fde68a','#f472b6'];
-
-  function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  function Particle(init) {
-    this.x = Math.random() * W;
-    this.y = init ? Math.random() * H : -20;
-    this.size = Math.random() * 5 + 2;
-    this.speedY = Math.random() * 0.5 + 0.2;
-    this.speedX = (Math.random() - 0.5) * 0.4;
-    this.opacity = Math.random() * 0.45 + 0.1;
-    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    this.type = Math.floor(Math.random() * 3);
-    this.rotation = Math.random() * Math.PI * 2;
-    this.rotSpeed = (Math.random() - 0.5) * 0.02;
-    this.swayT = Math.random() * 100;
-    this.sway = Math.random() * 0.7;
-  }
-  Particle.prototype.update = function() {
-    this.swayT += 0.01;
-    this.x += this.speedX + Math.sin(this.swayT) * this.sway;
-    this.y += this.speedY;
-    this.rotation += this.rotSpeed;
-    if (this.y > H + 20) { var p = new Particle(false); Object.assign(this, p); }
-  };
-  Particle.prototype.draw = function() {
-    ctx.save();
-    ctx.globalAlpha = this.opacity;
-    ctx.fillStyle = this.color;
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.rotation);
-    if (this.type === 0) {
-      ctx.beginPath(); ctx.arc(0, 0, this.size, 0, Math.PI*2); ctx.fill();
-    } else if (this.type === 1) {
-      ctx.beginPath(); ctx.ellipse(0, -this.size, this.size*0.6, this.size, 0, 0, Math.PI*2); ctx.fill();
-    } else {
-      ctx.beginPath();
-      for (var i = 0; i < 8; i++) {
-        var r = i%2===0 ? this.size : this.size*0.4;
-        var a = i*Math.PI/4;
-        if(i===0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
-        else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
-      }
-      ctx.closePath(); ctx.fill();
-    }
-    ctx.restore();
-  };
-
-  for (var i = 0; i < 55; i++) particles.push(new Particle(true));
-
-  function animate() {
-    ctx.clearRect(0, 0, W, H);
-    particles.forEach(function(p) { p.update(); p.draw(); });
-    requestAnimationFrame(animate);
-  }
-  animate();
-})();
-
-/* ====== SCROLL REVEAL ====== */
-(function() {
-  var io = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(function(el) { io.observe(el); });
-})();
-
-/* ====== COUNTDOWN ====== */
-(function() {
-  var isoDate = window._wdData && window._wdData.weddingDateISO ? window._wdData.weddingDateISO : '2026-09-30T11:30:00+05:30';
-  var target = new Date(isoDate).getTime();
-  var els = {
-    days:  document.getElementById('cd-days'),
-    hours: document.getElementById('cd-hours'),
-    mins:  document.getElementById('cd-mins'),
-    secs:  document.getElementById('cd-secs')
-  };
-  function pad(n) { return String(Math.max(0,Math.floor(n))).padStart(2,'0'); }
-  function flip(el, val) {
-    if (el.textContent !== val) {
-      el.classList.remove('flip');
-      void el.offsetWidth;
-      el.classList.add('flip');
-      el.textContent = val;
-    }
-  }
-  function tick() {
-    var diff = target - Date.now();
-    if (diff <= 0) { Object.values(els).forEach(function(el){ el.textContent='00'; }); return; }
-    flip(els.days,  pad(diff/86400000));
-    flip(els.hours, pad((diff%86400000)/3600000));
-    flip(els.mins,  pad((diff%3600000)/60000));
-    flip(els.secs,  pad((diff%60000)/1000));
-  }
-  tick(); setInterval(tick, 1000);
-})();
-
-/* ====== SCRATCH REVEAL ====== */
-(function() {
-  var container = document.getElementById('scratch-container');
-  var reveal    = document.getElementById('scratch-reveal');
-  var canvas    = document.getElementById('scratch-canvas');
-  var hint      = document.getElementById('scratch-hint');
-  var complete  = document.getElementById('scratch-complete');
-  var SIZE = Math.min(300, window.innerWidth * 0.8);
-
-  reveal.style.width = reveal.style.height = SIZE + 'px';
-  canvas.width = canvas.height = SIZE;
-  canvas.style.width = canvas.style.height = SIZE + 'px';
-
-  var ctx = canvas.getContext('2d');
-
-  // Draw heart overlay
-  ctx.save();
-  ctx.beginPath(); ctx.arc(SIZE/2,SIZE/2,SIZE/2,0,Math.PI*2); ctx.clip();
-  var g = ctx.createRadialGradient(SIZE/2,SIZE/2,10,SIZE/2,SIZE/2,SIZE/2);
-  g.addColorStop(0,'#f9a8d4'); g.addColorStop(0.5,'#f06292'); g.addColorStop(1,'#e91e8c');
-  ctx.fillStyle = g; ctx.fillRect(0,0,SIZE,SIZE);
-  // Heart
-  var cx=SIZE/2, cy=SIZE/2+10, s=SIZE*0.32;
-  ctx.fillStyle='rgba(255,255,255,0.2)';
-  ctx.beginPath();
-  ctx.moveTo(cx,cy+s*0.5);
-  ctx.bezierCurveTo(cx,cy,cx-s,cy,cx-s,cy-s*0.5);
-  ctx.bezierCurveTo(cx-s,cy-s,cx,cy-s,cx,cy-s*0.3);
-  ctx.bezierCurveTo(cx,cy-s,cx+s,cy-s,cx+s,cy-s*0.5);
-  ctx.bezierCurveTo(cx+s,cy,cx,cy,cx,cy+s*0.5);
-  ctx.fill();
-  // Sparkles
-  for (var i=0; i<40; i++) {
-    ctx.fillStyle='rgba(255,255,255,'+(Math.random()*0.6+0.2)+')';
-    ctx.beginPath(); ctx.arc(Math.random()*SIZE, Math.random()*SIZE, Math.random()*3+1, 0, Math.PI*2); ctx.fill();
-  }
-  // Dynamic date text behind the scratch layer (shown when revealed)
-  var _sd = document.getElementById('scratch-date-text');
-  var _sday = document.getElementById('scratch-day-text');
-  if (window._wdData) {
-    if (_sd) _sd.textContent = window._wdData.weddingDate || 'September 30, 2026';
-    if (_sday) _sday.textContent = window._wdData.weddingDay || 'Wednesday';
-  }
-  // Text on canvas
-  ctx.fillStyle='rgba(255,255,255,0.92)';
-  ctx.font = 'bold '+(SIZE*0.07)+'px Montserrat,sans-serif';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('SCRATCH ME', SIZE/2, SIZE/2);
-  ctx.restore();
-
-  ctx.globalCompositeOperation = 'destination-out';
-
-  var isDrawing = false, isDone = false;
-
-  function getPos(e) {
-    var rect = canvas.getBoundingClientRect();
-    var t = e.touches ? e.touches[0] : e;
-    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
-  }
-  function scratch(x, y) {
-    ctx.beginPath(); ctx.arc(x, y, SIZE*0.1, 0, Math.PI*2); ctx.fill();
-    checkPct();
-  }
-  function checkPct() {
-    if (isDone) return;
-    var data = ctx.getImageData(0,0,SIZE,SIZE).data;
-    var cleared = 0;
-    for (var i=3; i<data.length; i+=4) { if(data[i]<128) cleared++; }
-    if (cleared / (data.length/4) > 0.5) {
-      isDone = true;
-      canvas.style.opacity = '0';
-      hint.style.display = 'none';
-      complete.classList.add('visible');
-    }
-  }
-
-  canvas.addEventListener('mousedown', function(e){ isDrawing=true; var p=getPos(e); scratch(p.x,p.y); });
-  canvas.addEventListener('mousemove', function(e){ if(!isDrawing)return; var p=getPos(e); scratch(p.x,p.y); });
-  canvas.addEventListener('mouseup',   function(){ isDrawing=false; });
-  canvas.addEventListener('mouseleave',function(){ isDrawing=false; });
-  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); isDrawing=true; var p=getPos(e); scratch(p.x,p.y); },{passive:false});
-  canvas.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!isDrawing)return; var p=getPos(e); scratch(p.x,p.y); },{passive:false});
-  canvas.addEventListener('touchend',  function(){ isDrawing=false; });
-})();
-
-/* ====== DATA SYSTEM & ROUTING ====== */
-(function() {
-  var WD_KEY = 'wd_wedding';
-  var WD_GUESTS_KEY = 'wd_guests';
-
-  var WD_DEFAULT = {
-    slug: null, locked: false,
-    groomName: 'Veer', brideName: 'Zara',
-    invitationHeading: 'We are honoured to welcome you',
-    invitationSubtext: 'to the Wedding Ceremony of',
-    groomParents: 'Mr. & Mrs. Arjun Malhotra',
-    brideParents: 'Mr. & Mrs. Rashid Khan',
-    groomDegree: 'B.Tech (IIT Delhi) \u00b7 MBA (Harvard)',
-    brideDegree: 'BA (Delhi University) \u00b7 MA (JNU)',
-    weddingDate: 'September 30, 2026', weddingDay: 'Wednesday',
-    weddingDateISO: '2026-09-30T11:30:00+05:30',
-    countdownTitle: 'Counting Down to Forever',
-    countdownSubtitle: 'September 30, 2026 \u00b7 Mumbai',
-    venueName: 'The Taj Mahal Palace',
-    venueAddress: 'Apollo Bunder, Colaba, Mumbai, Maharashtra 400 001',
-    venueCity: 'Mumbai',
-    mapsUrl: 'https://maps.google.com/?q=Taj+Mahal+Palace+Mumbai',
-    whatsappNumber: '+919876543210',
-    heroImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85&auto=format&fit=crop',
-    countdownBgImage: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1600&q=80&auto=format&fit=crop',
-    venueImage: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80&auto=format&fit=crop',
-    event1Time: 'September 30 \u00b7 10:00 AM', event1Title: '\uD83C\uDF3A Guest Arrival',
-    event1Desc: 'Warm welcome with floral garlands, refreshments, and traditional music. The red carpet is laid for our honoured guests at the grand foyer.',
-    event2Time: 'September 30 \u00b7 11:30 AM', event2Title: '\uD83D\uDC8D Wedding Ceremony',
-    event2Desc: 'The sacred union. Exchange of vows, seven sacred circles, and the tying of the sacred knot in the presence of family and loved ones.',
-    event3Time: 'September 30 \u00b7 02:00 PM', event3Title: '\uD83E\uDD42 Grand Reception',
-    event3Desc: 'Celebrate the newlyweds with a sumptuous feast, live music, dancing, and heartfelt toasts. An evening of joy, laughter, and unforgettable memories.',
-    mehendiDate: 'September 27, 2026', mehendiTime: '5:00 PM \u2014 9:00 PM', mehendiLocation: 'Malhotra Residence, Juhu',
-    haldiDate: 'September 29, 2026', haldiTime: '9:00 AM \u2014 12:00 PM', haldiLocation: 'Khan Residence, Bandra',
-    transport1: 'Bandra Station \u2014 9:00 AM', transport2: 'Dadar Station \u2014 9:15 AM', transport3: 'CSMT Station \u2014 9:45 AM',
-    accommodationName: 'Taj Mahal Palace', accommodationWing: 'Heritage Wing', accommodationCode: 'VEERZARA2026',
-    footerTagline: 'Made with \u2764\uFE0F for our most cherished guests',
-    theme: 'default'
-  };
-
-  function loadData() {
-    try { var s = localStorage.getItem(WD_KEY); return s ? Object.assign({}, WD_DEFAULT, JSON.parse(s)) : WD_DEFAULT; }
-    catch(e) { return WD_DEFAULT; }
-  }
-
-  function loadGuests() {
-    try { return JSON.parse(localStorage.getItem(WD_GUESTS_KEY)) || []; }
-    catch(e) { return []; }
-  }
-
-  function slugToName(slug) {
-    return (slug || '').split('-').map(function(w){ return w ? w[0].toUpperCase()+w.slice(1) : ''; }).join(' ');
-  }
-
-  var params = new URLSearchParams(window.location.search);
-  var urlSlug  = params.get('s');
-  var urlGuest = params.get('g');
-
-  var data = loadData();
-  window._wdData = data; // expose for countdown/scratch
-
-  // Apply theme
-  if (data.theme && data.theme !== 'default') {
-    document.body.classList.add('theme-' + data.theme);
-  }
-
-  function setTxt(id, val) { var e=document.getElementById(id); if(e&&val!=null) e.textContent=val; }
-  function setHTML(id, val) { var e=document.getElementById(id); if(e&&val!=null) e.innerHTML=val; }
-  function setSrc(id, val) { var e=document.getElementById(id); if(e&&val) e.src=val; }
-  function setHref(id, val) { var e=document.getElementById(id); if(e&&val) e.href=val; }
-  function setBgStyle(id, val) { var e=document.getElementById(id); if(e&&val) e.style.backgroundImage="url('"+val+"')"; }
-
-  // Populate all dynamic content
-  setTxt('env-couple-names', data.groomName + ' & ' + data.brideName);
-  setTxt('env-wedding-date', data.weddingDate);
-  setTxt('env-city', data.venueCity || 'Mumbai');
-  setTxt('hero-heading', '\u2726 ' + data.invitationHeading + ' \u2726');
-  setTxt('hero-subheading', data.invitationSubtext);
-  setTxt('hero-groom-name', data.groomName);
-  setTxt('hero-bride-name', data.brideName);
-  setTxt('hero-groom-parents', data.groomParents);
-  setTxt('hero-bride-parents', data.brideParents);
-  setTxt('hero-degrees', (data.groomDegree||'') + '  &  ' + (data.brideDegree||''));
-  setTxt('scratch-date-text', data.weddingDate);
-  setTxt('scratch-day-text', data.weddingDay);
-  setTxt('countdown-title-text', data.countdownTitle);
-  setTxt('countdown-subtitle-text', data.countdownSubtitle);
-  setTxt('event1-time', data.event1Time); setTxt('event1-title', data.event1Title); setTxt('event1-desc', data.event1Desc);
-  setTxt('event2-time', data.event2Time); setTxt('event2-title', data.event2Title); setTxt('event2-desc', data.event2Desc);
-  setTxt('event3-time', data.event3Time); setTxt('event3-title', data.event3Title); setTxt('event3-desc', data.event3Desc);
-  setTxt('venue-name', data.venueName);
-  setHTML('venue-address', (data.venueAddress||'').replace(/,\s*/g, ',<br/>'));
-  setHref('maps-link', data.mapsUrl || '#');
-  setSrc('venue-img', data.venueImage);
-  setHTML('mehendi-details', '<strong>'+data.mehendiDate+'</strong><br/>'+data.mehendiTime+'<br/>'+data.mehendiLocation);
-  setHTML('haldi-details', '<strong>'+data.haldiDate+'</strong><br/>'+data.haldiTime+'<br/>'+data.haldiLocation);
-  setHTML('transport-details', '&#128309; '+data.transport1+'<br/>&#128309; '+data.transport2+'<br/>&#128309; '+data.transport3);
-  setHTML('accommodation-details', '<strong>'+data.accommodationName+'</strong><br/>'+data.accommodationWing+'<br/>Code: <em>'+data.accommodationCode+'</em>');
-  setTxt('footer-couple-names', data.groomName + ' & ' + data.brideName);
-  setTxt('footer-date', data.weddingDate + ' \u00b7 ' + data.venueName);
-  setTxt('footer-tagline', data.footerTagline);
-  setBgStyle('hero-bg', data.heroImage);
-  // Countdown bg (inline style on .countdown-bg div)
-  (function(){ var cb=document.querySelector('.countdown-bg'); if(cb&&data.countdownBgImage) cb.style.backgroundImage="url('"+data.countdownBgImage+"')"; })();
-
-  // WhatsApp RSVP button
-  (function(){
-    var btn = document.getElementById('whatsapp-rsvp-btn');
-    if (!btn) return;
-    var phone = (data.whatsappNumber || '').replace(/[^0-9]/g,'');
-    var names = data.groomName + ' & ' + data.brideName;
-    var guestSuffix = urlGuest ? (', ' + slugToName(urlGuest)) : '';
-    var msg = 'Assalamualaikum' + guestSuffix + ', I received the wedding invitation of ' + names + '. Thank you for inviting me. \uD83C\uDF8A';
-    btn.href = phone ? 'https://wa.me/' + phone + '?text=' + encodeURIComponent(msg) : '#';
-  })();
-
-  // Guest banner
-  if (urlGuest) {
-    var guestName = slugToName(urlGuest);
-    var guests = loadGuests();
-    var found = guests.find(function(g){ return g.slug === urlGuest; });
-    if (found) guestName = found.name;
-    var banner = document.getElementById('guest-banner');
-    var nameEl = document.getElementById('guest-name-display');
-    if (banner) banner.style.display = 'block';
-    if (nameEl) nameEl.textContent = guestName;
-  }
-})();
-
-
-// ==========================================
-// WEDDING CUSTOMIZER STUDIO & GUEST PERSONALIZER
-// ==========================================
-var WD_LOCK_KEY = 'wedding_lock_status_v1';
+function saveData(d) {
+  try {
+    localStorage.setItem(WD_KEY, JSON.stringify(d));
+  } catch(e) {}
+}
 
 function isLocked() {
   return localStorage.getItem(WD_LOCK_KEY) === 'true';
 }
+
+function setTxt(id, val) { var e=document.getElementById(id); if(e&&val!=null) e.textContent=val; }
+function setHTML(id, val) { var e=document.getElementById(id); if(e&&val!=null) e.innerHTML=val; }
+function setSrc(id, val) { var e=document.getElementById(id); if(e&&val) e.src=val; }
+function setHref(id, val) { var e=document.getElementById(id); if(e&&val) e.href=val; }
 
 function showToast(msg) {
   var t = document.getElementById('studio-toast');
@@ -2553,6 +2267,30 @@ function showToast(msg) {
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
 
+/* ====== ENVELOPE ====== */
+var envelopeOpened = false;
+function openEnvelope() {
+  if (envelopeOpened) return;
+  envelopeOpened = true;
+  var scene = document.getElementById('envelope-scene');
+  if (scene) scene.classList.add('open');
+  setTimeout(function() {
+    var overlay = document.getElementById('envelope-overlay');
+    if (overlay) overlay.classList.add('hidden');
+    var main = document.getElementById('main-content');
+    if (main) {
+      main.removeAttribute('aria-hidden');
+      main.classList.add('revealed');
+    }
+    setTimeout(function() {
+      document.querySelectorAll('#hero .reveal').forEach(function(el, i) {
+        setTimeout(function() { el.classList.add('visible'); }, i * 120);
+      });
+    }, 400);
+  }, 1200);
+}
+
+/* ====== CUSTOMIZER STUDIO ====== */
 function toggleStudioDrawer(forceState) {
   var drawer = document.getElementById('studio-drawer');
   var overlay = document.getElementById('studio-overlay');
@@ -2577,17 +2315,15 @@ function switchStudioTab(tabKey, btnEl) {
 }
 
 function applyTheme(themeName, cardEl) {
-  var currentData = loadData();
-  currentData.theme = themeName;
-  try { localStorage.setItem(WD_KEY, JSON.stringify(currentData)); } catch(e) {}
+  var data = loadData();
+  data.theme = themeName;
+  saveData(data);
   
-  // Apply class to body
   document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
   if (themeName && themeName !== 'default') {
     document.body.classList.add('theme-' + themeName);
   }
   
-  // Update card UI
   document.querySelectorAll('.theme-card').forEach(function(c){ c.classList.remove('active'); });
   if (cardEl) {
     cardEl.classList.add('active');
@@ -2603,10 +2339,10 @@ function applyTheme(themeName, cardEl) {
 }
 
 function updateLiveField(key, val) {
-  var currentData = loadData();
-  currentData[key] = val;
-  try { localStorage.setItem(WD_KEY, JSON.stringify(currentData)); } catch(e) {}
-  populateLiveUI(currentData);
+  var data = loadData();
+  data[key] = val;
+  saveData(data);
+  populateLiveUI(data);
 }
 
 function populateLiveUI(d) {
@@ -2636,7 +2372,6 @@ function populateLiveUI(d) {
   var cdBg = document.querySelector('.countdown-bg');
   if (cdBg && d.countdownBgImage) cdBg.style.backgroundImage = "url('" + d.countdownBgImage + "')";
 
-  // WhatsApp RSVP button
   var btn = document.getElementById('whatsapp-rsvp-btn');
   if (btn) {
     var phone = (d.whatsappNumber || '').replace(/[^0-9]/g,'');
@@ -2655,15 +2390,15 @@ function handleImageFile(key, inputEl, previewId) {
   var reader = new FileReader();
   reader.onload = function(e) {
     var dataUrl = e.target.result;
-    var currentData = loadData();
-    currentData[key] = dataUrl;
-    try { localStorage.setItem(WD_KEY, JSON.stringify(currentData)); } catch(err) {}
+    var data = loadData();
+    data[key] = dataUrl;
+    saveData(data);
     var prev = document.getElementById(previewId);
     if (prev) {
       prev.style.backgroundImage = "url('" + dataUrl + "')";
       prev.classList.add('active');
     }
-    populateLiveUI(currentData);
+    populateLiveUI(data);
     showToast('Photo uploaded & applied!');
   };
   reader.readAsDataURL(file);
@@ -2837,12 +2572,9 @@ function copyGuestLink() {
 
 function shareGuestWhatsApp() {
   if (!lastGeneratedLink) return;
-  var currentData = loadData();
-  var names = currentData.groomName + ' & ' + currentData.brideName;
-  var msg = 'Assalamualaikum ' + lastGeneratedGuest + ', you are cordially invited to the wedding celebration of ' + names + '!
-
-Please view your personalized invitation card here:
-' + lastGeneratedLink;
+  var data = loadData();
+  var names = data.groomName + ' & ' + data.brideName;
+  var msg = 'Assalamualaikum ' + lastGeneratedGuest + ', you are cordially invited to the wedding celebration of ' + names + '!\n\nPlease view your personalized invitation card here:\n' + lastGeneratedLink;
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 
@@ -2851,21 +2583,210 @@ function openGuestPreview() {
   window.open(lastGeneratedLink, '_blank');
 }
 
-// Studio Setup Initialization
-(function initStudio(){
-  var currentData = loadData();
-  
+/* ====== PARTICLES ====== */
+(function initParticles() {
+  var canvas = document.getElementById('particles-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, particles = [];
+  var COLORS = ['#f9a8d4','#fcd34d','#fbcfe8','#c9a84c','#fde68a','#f472b6'];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function Particle(init) {
+    this.x = Math.random() * W;
+    this.y = init ? Math.random() * H : -20;
+    this.size = Math.random() * 5 + 2;
+    this.speedY = Math.random() * 0.5 + 0.2;
+    this.speedX = (Math.random() - 0.5) * 0.4;
+    this.opacity = Math.random() * 0.45 + 0.1;
+    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    this.type = Math.floor(Math.random() * 3);
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.02;
+    this.swayT = Math.random() * 100;
+    this.sway = Math.random() * 0.7;
+  }
+  Particle.prototype.update = function() {
+    this.swayT += 0.01;
+    this.x += this.speedX + Math.sin(this.swayT) * this.sway;
+    this.y += this.speedY;
+    this.rotation += this.rotSpeed;
+    if (this.y > H + 20) { var p = new Particle(false); Object.assign(this, p); }
+  };
+  Particle.prototype.draw = function() {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.fillStyle = this.color;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    if (this.type === 0) {
+      ctx.beginPath(); ctx.arc(0, 0, this.size, 0, Math.PI*2); ctx.fill();
+    } else if (this.type === 1) {
+      ctx.beginPath(); ctx.ellipse(0, -this.size, this.size*0.6, this.size, 0, 0, Math.PI*2); ctx.fill();
+    } else {
+      ctx.beginPath();
+      for (var i = 0; i < 8; i++) {
+        var r = i%2===0 ? this.size : this.size*0.4;
+        var a = i*Math.PI/4;
+        if(i===0) ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+        else ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  for (var i = 0; i < 55; i++) particles.push(new Particle(true));
+
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(function(p) { p.update(); p.draw(); });
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+/* ====== SCROLL REVEAL ====== */
+(function initScrollReveal() {
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(function(el) { io.observe(el); });
+})();
+
+/* ====== COUNTDOWN ====== */
+(function initCountdown() {
+  var data = loadData();
+  var isoDate = data.weddingDateISO || '2026-09-30T11:30:00+05:30';
+  var target = new Date(isoDate).getTime();
+  var els = {
+    days:  document.getElementById('cd-days'),
+    hours: document.getElementById('cd-hours'),
+    mins:  document.getElementById('cd-mins'),
+    secs:  document.getElementById('cd-secs')
+  };
+  function pad(n) { return String(Math.max(0,Math.floor(n))).padStart(2,'0'); }
+  function flip(el, val) {
+    if (!el) return;
+    if (el.textContent !== val) {
+      el.classList.remove('flip');
+      void el.offsetWidth;
+      el.classList.add('flip');
+      el.textContent = val;
+    }
+  }
+  function tick() {
+    var diff = target - Date.now();
+    if (diff <= 0) { Object.values(els).forEach(function(el){ if(el) el.textContent='00'; }); return; }
+    flip(els.days,  pad(diff/86400000));
+    flip(els.hours, pad((diff%86400000)/3600000));
+    flip(els.mins,  pad((diff%3600000)/60000));
+    flip(els.secs,  pad((diff%60000)/1000));
+  }
+  tick(); setInterval(tick, 1000);
+})();
+
+/* ====== SCRATCH REVEAL ====== */
+(function initScratch() {
+  var container = document.getElementById('scratch-container');
+  var reveal    = document.getElementById('scratch-reveal');
+  var canvas    = document.getElementById('scratch-canvas');
+  var hint      = document.getElementById('scratch-hint');
+  var complete  = document.getElementById('scratch-complete');
+  if (!canvas || !reveal) return;
+  var SIZE = Math.min(300, window.innerWidth * 0.8);
+
+  reveal.style.width = reveal.style.height = SIZE + 'px';
+  canvas.width = canvas.height = SIZE;
+  canvas.style.width = canvas.style.height = SIZE + 'px';
+
+  var ctx = canvas.getContext('2d');
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(SIZE/2,SIZE/2,SIZE/2,0,Math.PI*2); ctx.clip();
+  var g = ctx.createRadialGradient(SIZE/2,SIZE/2,10,SIZE/2,SIZE/2,SIZE/2);
+  g.addColorStop(0,'#f9a8d4'); g.addColorStop(0.5,'#f06292'); g.addColorStop(1,'#e91e8c');
+  ctx.fillStyle = g; ctx.fillRect(0,0,SIZE,SIZE);
+
+  var cx=SIZE/2, cy=SIZE/2+10, s=SIZE*0.32;
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.moveTo(cx,cy+s*0.5);
+  ctx.bezierCurveTo(cx,cy,cx-s,cy,cx-s,cy-s*0.5);
+  ctx.bezierCurveTo(cx-s,cy-s,cx,cy-s,cx,cy-s*0.3);
+  ctx.bezierCurveTo(cx,cy-s,cx+s,cy-s,cx+s,cy-s*0.5);
+  ctx.bezierCurveTo(cx+s,cy,cx,cy,cx,cy+s*0.5);
+  ctx.fill();
+
+  for (var i=0; i<40; i++) {
+    ctx.fillStyle='rgba(255,255,255,'+(Math.random()*0.6+0.2)+')';
+    ctx.beginPath(); ctx.arc(Math.random()*SIZE, Math.random()*SIZE, Math.random()*3+1, 0, Math.PI*2); ctx.fill();
+  }
+
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  ctx.font = 'bold '+(SIZE*0.07)+'px Montserrat,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('SCRATCH ME', SIZE/2, SIZE/2);
+  ctx.restore();
+
+  ctx.globalCompositeOperation = 'destination-out';
+  var isDrawing = false, isDone = false;
+
+  function getPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+  function scratch(x, y) {
+    ctx.beginPath(); ctx.arc(x, y, SIZE*0.1, 0, Math.PI*2); ctx.fill();
+    checkPct();
+  }
+  function checkPct() {
+    if (isDone) return;
+    var data = ctx.getImageData(0,0,SIZE,SIZE).data;
+    var cleared = 0;
+    for (var i=3; i<data.length; i+=4) { if(data[i]<128) cleared++; }
+    if (cleared / (data.length/4) > 0.5) {
+      isDone = true;
+      canvas.style.opacity = '0';
+      if (hint) hint.style.display = 'none';
+      if (complete) complete.classList.add('visible');
+    }
+  }
+
+  canvas.addEventListener('mousedown', function(e){ isDrawing=true; var p=getPos(e); scratch(p.x,p.y); });
+  canvas.addEventListener('mousemove', function(e){ if(!isDrawing)return; var p=getPos(e); scratch(p.x,p.y); });
+  canvas.addEventListener('mouseup',   function(){ isDrawing=false; });
+  canvas.addEventListener('mouseleave',function(){ isDrawing=false; });
+  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); isDrawing=true; var p=getPos(e); scratch(p.x,p.y); },{passive:false});
+  canvas.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!isDrawing)return; var p=getPos(e); scratch(p.x,p.y); },{passive:false});
+  canvas.addEventListener('touchend',  function(){ isDrawing=false; });
+})();
+
+/* ====== INITIALIZE STUDIO & PAGE ====== */
+document.addEventListener('DOMContentLoaded', function(){
+  var data = loadData();
+
   // Populate inputs in Studio
-  var inpGroom = document.getElementById('inp-groom'); if (inpGroom) inpGroom.value = currentData.groomName || '';
-  var inpBride = document.getElementById('inp-bride'); if (inpBride) inpBride.value = currentData.brideName || '';
-  var inpDate = document.getElementById('inp-date'); if (inpDate) inpDate.value = currentData.weddingDate || '';
-  var inpDay = document.getElementById('inp-day'); if (inpDay) inpDay.value = currentData.weddingDay || '';
-  var inpCity = document.getElementById('inp-city'); if (inpCity) inpCity.value = currentData.venueCity || '';
-  var inpPhone = document.getElementById('inp-phone'); if (inpPhone) inpPhone.value = currentData.whatsappNumber || '';
-  var inpVenueName = document.getElementById('inp-venue-name'); if (inpVenueName) inpVenueName.value = currentData.venueName || '';
-  var inpVenueAddr = document.getElementById('inp-venue-addr'); if (inpVenueAddr) inpVenueAddr.value = currentData.venueAddress || '';
-  var inpGroomParents = document.getElementById('inp-groom-parents'); if (inpGroomParents) inpGroomParents.value = currentData.groomParents || '';
-  var inpBrideParents = document.getElementById('inp-bride-parents'); if (inpBrideParents) inpBrideParents.value = currentData.brideParents || '';
+  var inpGroom = document.getElementById('inp-groom'); if (inpGroom) inpGroom.value = data.groomName || '';
+  var inpBride = document.getElementById('inp-bride'); if (inpBride) inpBride.value = data.brideName || '';
+  var inpDate = document.getElementById('inp-date'); if (inpDate) inpDate.value = data.weddingDate || '';
+  var inpDay = document.getElementById('inp-day'); if (inpDay) inpDay.value = data.weddingDay || '';
+  var inpCity = document.getElementById('inp-city'); if (inpCity) inpCity.value = data.venueCity || '';
+  var inpPhone = document.getElementById('inp-phone'); if (inpPhone) inpPhone.value = data.whatsappNumber || '';
+  var inpVenueName = document.getElementById('inp-venue-name'); if (inpVenueName) inpVenueName.value = data.venueName || '';
+  var inpVenueAddr = document.getElementById('inp-venue-addr'); if (inpVenueAddr) inpVenueAddr.value = data.venueAddress || '';
+  var inpGroomParents = document.getElementById('inp-groom-parents'); if (inpGroomParents) inpGroomParents.value = data.groomParents || '';
+  var inpBrideParents = document.getElementById('inp-bride-parents'); if (inpBrideParents) inpBrideParents.value = data.brideParents || '';
 
   // Setup photo dropzones
   setupDropzone('drop-hero', 'file-hero', 'heroImage', 'prev-hero');
@@ -2873,11 +2794,13 @@ function openGuestPreview() {
   setupDropzone('drop-venue', 'file-venue', 'venueImage', 'prev-venue');
 
   // Setup existing photo previews
-  if (currentData.heroImage) { var ph = document.getElementById('prev-hero'); if(ph){ ph.style.backgroundImage = "url('"+currentData.heroImage+"')"; ph.classList.add('active'); } }
-  if (currentData.countdownBgImage) { var pc = document.getElementById('prev-countdown'); if(pc){ pc.style.backgroundImage = "url('"+currentData.countdownBgImage+"')"; pc.classList.add('active'); } }
-  if (currentData.venueImage) { var pv = document.getElementById('prev-venue'); if(pv){ pv.style.backgroundImage = "url('"+currentData.venueImage+"')"; pv.classList.add('active'); } }
+  if (data.heroImage) { var ph = document.getElementById('prev-hero'); if(ph){ ph.style.backgroundImage = "url('"+data.heroImage+"')"; ph.classList.add('active'); } }
+  if (data.countdownBgImage) { var pc = document.getElementById('prev-countdown'); if(pc){ pc.style.backgroundImage = "url('"+data.countdownBgImage+"')"; pc.classList.add('active'); } }
+  if (data.venueImage) { var pv = document.getElementById('prev-venue'); if(pv){ pv.style.backgroundImage = "url('"+data.venueImage+"')"; pv.classList.add('active'); } }
 
-  // Update lock UI & history
+  // Apply theme & populate
+  applyTheme(data.theme || 'pink');
+  populateLiveUI(data);
   updateLockUI();
   renderGuestHistory();
 
@@ -2895,13 +2818,12 @@ function openGuestPreview() {
     if (guestBanner) guestBanner.style.display = 'block';
     if (guestNameDisplay) guestNameDisplay.textContent = cleanGuestName;
   } else if (!isLocked()) {
-    // If not locked and not a guest, open Studio automatically to customize
+    // If not locked and not a guest, open Studio automatically so host can edit
     setTimeout(function(){
       toggleStudioDrawer(true);
     }, 400);
   }
-})();
-
+});
 </script>
 </body>
 </html>
